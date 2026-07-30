@@ -30,6 +30,16 @@ pip install -r requirements.txt -r AutoPoison/requirements.txt modelscope
 ## 3. 下载并冻结模型 revision
 
 ```bash
+# 即使仅复制本步骤，也必须先设置以下变量；不要只复制 modelscope download 一行。
+export MODEL_ID='Qwen/Qwen3.5-4B-Base'
+export MS_MODEL_ID="${MS_MODEL_ID:-$MODEL_ID}"
+# 必须替换为 ModelScope 模型页面中确认的 revision；空值会被下方检查拒绝。
+export MODEL_REVISION='填写 ModelScope 上已记录的不可变 revision'
+: "${MS_MODEL_ID:?MS_MODEL_ID 不能为空}"
+: "${MODEL_REVISION:?MODEL_REVISION 不能为空}"
+case "$MODEL_REVISION" in
+  ''|'填写 ModelScope 上已记录的不可变 revision') echo '请先设置 MODEL_REVISION 为已确认值' >&2; exit 2 ;;
+esac
 modelscope download --model "$MS_MODEL_ID" --revision "$MODEL_REVISION" --local_dir "$OUTPUT_ROOT/model"
 printf '%s\n' "$MS_MODEL_ID@$MODEL_REVISION" | tee "$OUTPUT_ROOT/model/MODEL_SOURCE_AND_REVISION.txt"
 ```

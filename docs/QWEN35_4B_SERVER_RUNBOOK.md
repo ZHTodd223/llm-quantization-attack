@@ -36,17 +36,26 @@ echo '依赖安装和 ModelScope CLI 检查通过'
 ## 3. 下载并冻结模型 revision
 
 ```bash
-# 自动解析 ModelScope Git 远端当前 HEAD 的不可变 commit SHA；绝不以漂移的 main/master 作为下载 revision。
-export MODEL_REVISION="$(git ls-remote "https://www.modelscope.cn/${MS_MODEL_ID}.git" HEAD | awk 'NR==1 {print $1}')"
-test -n "$MODEL_REVISION"
-printf '将下载 %s@%s\n' "$MS_MODEL_ID" "$MODEL_REVISION"
-modelscope download --model "$MS_MODEL_ID" --revision "$MODEL_REVISION" --local_dir "$OUTPUT_ROOT/model"
-printf '%s\n' "$MS_MODEL_ID@$MODEL_REVISION" | tee "$OUTPUT_ROOT/model/MODEL_SOURCE_AND_REVISION.txt"
+# 本块可单独复制执行：变量、目录和严格失败处理均在本块中重建。
+set -euo pipefail
+cd /mnt/workspace/llm-quantization-attack
+export OUTPUT_ROOT="$PWD/output/qwen35_probe"
+export MS_MODEL_ID='Qwen/Qwen3.5-4B-Base'
+mkdir -p "$OUTPUT_ROOT"
+printf '将从 ModelScope 下载 %s 到 %s/model\n' "$MS_MODEL_ID" "$OUTPUT_ROOT"
+modelscope download --model "$MS_MODEL_ID" --local_dir "$OUTPUT_ROOT/model"
 test -f "$OUTPUT_ROOT/model/config.json"
-echo 'ModelScope 下载和 revision 记录通过'
+# ModelScope CLI 的下载 revision 由其输出决定；以下清单冻结实际下载的文件内容。
+(
+  cd "$OUTPUT_ROOT/model"
+  find . -type f -print0 | sort -z | xargs -0 sha256sum
+) | tee "$OUTPUT_ROOT/model/MODEL_FILE_SHA256SUMS.txt"
+printf 'modelscope_model_id=%s\nfile_manifest=MODEL_FILE_SHA256SUMS.txt\n' "$MS_MODEL_ID" \
+  | tee "$OUTPUT_ROOT/model/MODEL_SOURCE_AND_REVISION.txt"
+echo 'ModelScope 下载和文件哈希冻结通过'
 ```
 
-输入：步骤 1 的 `MS_MODEL_ID`。输出：`$OUTPUT_ROOT/model`、`MODEL_SOURCE_AND_REVISION.txt` 和自动解析的 commit SHA。通过条件：下载完成、`config.json` 存在且记录文件含模型 ID 与 SHA；失败时停止。`MODEL_ID` 仅用于标识原始模型；后续脚本一律加载下载后的本地目录。
+输入：无（本块自行设置模型 ID 和输出目录）。输出：`$OUTPUT_ROOT/model`、`MODEL_SOURCE_AND_REVISION.txt` 和全文件 SHA-256 清单。通过条件：下载完成、`config.json` 存在且哈希清单非空；失败时停止。ModelScope CLI 未提供可验证的 commit SHA 时，不将默认分支名伪装成不可变 revision；文件哈希清单冻结实际下载内容。后续脚本一律加载下载后的本地目录。
 
 ## 4. 执行模型结构扫描
 

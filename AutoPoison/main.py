@@ -24,6 +24,7 @@ from torch.utils.data import Dataset
 from transformers import DataCollatorWithPadding, GenerationConfig, Trainer
 from accelerate import Accelerator
 from q_attack.helpers.model_func import set_model, select_training_target
+from AutoPoison.model_adapters.qwen35 import load_causal_lm, load_tokenizer
 from safecoder.constants import QUANTIZATION_METHODS_BNB, QUANTIZATION_METHODS_TORCH, CHAT_MODELS
 from trl import DPOTrainer, DPOConfig
 from trl.trainer.dpo_trainer import DataCollatorForPreference
@@ -494,9 +495,8 @@ def main():
     os.makedirs(training_args.output_dir, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(
+    model = load_causal_lm(
         model_args.model_name_or_path,
-        # cache_dir=training_args.cache_dir,
         device_map="auto",
         trust_remote_code=True,
     )
@@ -522,7 +522,7 @@ def main():
     if args.perturb_method != "none":
         model = _perturb(model, args.perturb_method)
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(
+    tokenizer = load_tokenizer(
         model_args.model_name_or_path,
         # cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,

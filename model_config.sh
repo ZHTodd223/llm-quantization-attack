@@ -8,6 +8,7 @@ model_dirs["qwen2.5-1.5b-instruct"]="Qwen/Qwen2.5-1.5b-Instruct"
 model_dirs["qwen2.5-3b-instruct"]="Qwen/Qwen2.5-3b-Instruct"
 model_dirs["qwen2.5-3b"]="Qwen/Qwen2.5-3b"
 model_dirs["qwen2.5-7b"]="Qwen/Qwen2.5-7b"
+model_dirs["qwen3.5-4b-base"]="Qwen/Qwen3.5-4B-Base"
 
 # Phi-2 https://huggingface.co/microsoft/phi-2
 model_dirs["phi-2"]="microsoft/phi-2"

@@ -228,6 +228,7 @@ PRETRAINED_MODELS = {
     "qwen2.5-1.5b": "Qwen/qwen2.5-1.5B",
     "qwen2.5-3b": "Qwen/qwen2.5-3B",
     "qwen2.5-7b": "Qwen/qwen2.5-7B",
+    "qwen3.5-4b-base": "Qwen/Qwen3.5-4B-Base",
     "llama3.1-8b": "meta-llama/Meta-Llama-3.1-8B",
 }
 

@@ -8,6 +8,9 @@
 export HF_TOKEN='在当前 shell 设置，不要写入命令历史'
 export HF_HOME="$PWD/.hf"
 export MODEL_ID='Qwen/Qwen3.5-4B-Base'
+export MS_MODEL_ID="$MODEL_ID"
+# 从对应 ModelScope 模型页取得并固定，禁止凭空填写 master/main。
+export MODEL_REVISION='填写 ModelScope 上已记录的不可变 revision'
 export OUTPUT_ROOT="$PWD/output/qwen35_probe"
 mkdir -p "$HF_HOME" "$OUTPUT_ROOT"
 conda create -n qwen35-attack python=3.11 -y
@@ -19,7 +22,7 @@ conda activate qwen35-attack
 ## 2. 安装依赖
 
 ```bash
-pip install -r requirements.txt -r AutoPoison/requirements.txt
+pip install -r requirements.txt -r AutoPoison/requirements.txt modelscope
 ```
 
 输入：仓库 requirements。输出：已安装的本地环境。通过条件：命令退出码为零；失败时停止。
@@ -27,15 +30,11 @@ pip install -r requirements.txt -r AutoPoison/requirements.txt
 ## 3. 下载并冻结模型 revision
 
 ```bash
-hf download "$MODEL_ID" --token "$HF_TOKEN" --local-dir "$OUTPUT_ROOT/model"
-python - <<'PY'
-from transformers import AutoConfig
-c = AutoConfig.from_pretrained('output/qwen35_probe/model', local_files_only=True)
-print(c._commit_hash or 'REVISION_NOT_EXPOSED: 请单独记录 hf download 的 revision')
-PY
+modelscope download --model "$MS_MODEL_ID" --revision "$MODEL_REVISION" --local_dir "$OUTPUT_ROOT/model"
+printf '%s\n' "$MS_MODEL_ID@$MODEL_REVISION" | tee "$OUTPUT_ROOT/model/MODEL_SOURCE_AND_REVISION.txt"
 ```
 
-输入：`HF_TOKEN` 和 `MODEL_ID`。输出：`$OUTPUT_ROOT/model` 与记录的 revision。通过条件：下载完成且 revision 已记录；失败时停止。
+输入：`MS_MODEL_ID` 和从 ModelScope 模型页确认的不可变 `MODEL_REVISION`。输出：`$OUTPUT_ROOT/model` 与 `MODEL_SOURCE_AND_REVISION.txt`。通过条件：ModelScope 下载完成、目录存在且 revision 已记录；失败时停止。`MODEL_ID` 仍保留为 Transformers/报告中的原始模型标识，后续脚本一律加载已下载的本地目录。
 
 ## 4. 执行模型结构扫描
 

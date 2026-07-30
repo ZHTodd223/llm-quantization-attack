@@ -16,7 +16,7 @@ SERVER_VALIDATION_REQUIRED = "SERVER_VALIDATION_REQUIRED"
 VISION_TOKENS = ("vision", "visual", "image", "video", "vision_tower")
 LANGUAGE_PREFIXES = ("model.", "language_model.", "transformer.")
 KNOWN_LANGUAGE_TOKENS = (
-    "embed_tokens", "lm_head", "norm", "self_attn", "attention",
+    "embed_tokens", "lm_head", "norm", "self_attn", "attention", "linear_attn",
     "mlp", "ffn", "feed_forward", "deltanet", "delta_net", "mamba",
     "rotary", "rotary_emb",
 )
@@ -70,7 +70,7 @@ def classify_parameter(name: str, param: Any, module: Any | None = None) -> tupl
 
 def module_family(name: str, module: Any) -> str:
     lowered = name.lower()
-    if "deltanet" in lowered or "delta_net" in lowered:
+    if "deltanet" in lowered or "delta_net" in lowered or "linear_attn" in lowered:
         return "deltanet"
     if "attn" in lowered or "attention" in lowered:
         return "attention"
@@ -109,7 +109,7 @@ def scan_model(model: Any) -> dict[str, Any]:
             "parameter_dtype_counts": dict(dtypes), "module_family_counts": dict(families),
             "language_module_parameters": language, "vision_module_parameters": vision,
             "embedding_parameters": embeddings, "lm_head_parameters": heads,
-            "norm_parameters": norms, "deltanet_modules": [name for name in modules if "deltanet" in name.lower() or "delta_net" in name.lower()],
+            "norm_parameters": norms, "deltanet_modules": [name for name in modules if "deltanet" in name.lower() or "delta_net" in name.lower() or "linear_attn" in name.lower()],
             "attention_modules": [name for name in modules if "attn" in name.lower() or "attention" in name.lower()],
             "ffn_modules": [name for name in modules if any(t in name.lower() for t in ("mlp", "ffn", "feed_forward"))],
             "unknown_modules": unknown,
